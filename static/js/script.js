@@ -53,7 +53,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 reps: reps
             }),
         })
-        .then(response => response.json())
+        .then(async response => {
+            const contentType = response.headers.get('content-type');
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            
+            // Try to parse error message from response even if status is not OK
+            if (!response.ok) {
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        // If JSON parsing fails, use the default error message
+                    }
+                }
+                throw new Error(errorMessage);
+            }
+            
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Expected JSON response but got ' + contentType);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 workoutRunning = true;
@@ -61,19 +82,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 stopBtn.disabled = false;
                 
                 // Update UI
-                currentExercise.textContent = selectedExercise.replace('_', ' ').toUpperCase();
+                currentExercise.textContent = selectedExercise.replace('_', ' ').toUpperCase().replace('.EXE', '');
                 currentSet.textContent = `1 / ${sets}`;
                 currentReps.textContent = `0 / ${reps}`;
                 
                 // Start status polling
                 statusCheckInterval = setInterval(checkStatus, 1000);
             } else {
-                alert('Failed to start exercise: ' + (data.error || 'Unknown error'));
+                const errorMsg = data.error || 'Unknown error';
+                console.error('Exercise start failed:', errorMsg);
+                alert('Failed to start exercise: ' + errorMsg);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while starting the exercise.');
+            alert('Error: ' + (error.message || 'An error occurred while starting the exercise.'));
         });
     });
     
@@ -85,7 +108,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Expected JSON response but got ' + contentType);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 resetWorkoutUI();
@@ -99,7 +131,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to check status
     function checkStatus() {
         fetch('/get_status')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Expected JSON response but got ' + contentType);
+            }
+            return response.json();
+        })
         .then(data => {
             if (!data.exercise_running && workoutRunning) {
                 // Workout has ended
@@ -113,6 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error checking status:', error);
+            // Silently fail for status checks to avoid spam
         });
     }
     
@@ -127,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
             statusCheckInterval = null;
         }
         
-        currentExercise.textContent = 'None';
+        currentExercise.textContent = 'STANDBY';
         currentSet.textContent = '0 / 0';
         currentReps.textContent = '0 / 0';
     }
