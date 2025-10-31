@@ -214,40 +214,72 @@ def start_exercise():
     global exercise_counter, exercise_goal, sets_completed, sets_goal
     global workout_start_time
     
-    data = request.json
-    exercise_type = data.get('exercise_type')
-    sets_goal = int(data.get('sets', 3))
-    exercise_goal = int(data.get('reps', 10))
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        exercise_type = data.get('exercise_type')
+        if not exercise_type:
+            return jsonify({'success': False, 'error': 'Exercise type is required'}), 400
+        
+        try:
+            sets_goal = int(data.get('sets', 3))
+            exercise_goal = int(data.get('reps', 10))
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid sets or reps value'}), 400
+    except Exception as e:
+        logger.error(f"Error parsing request: {e}")
+        return jsonify({'success': False, 'error': 'Invalid request format'}), 400
     
-    # Initialize camera if not already done
-    initialize_camera()
-    
-    # Reset counters
-    exercise_counter = 0
-    sets_completed = 0
-    workout_start_time = time.time()
-    
-    # Initialize the appropriate exercise class
-    if exercise_type == "squat":
-        current_exercise = Squat()
-    elif exercise_type == "push_up":
-        current_exercise = PushUp()
-    elif exercise_type == "hammer_curl":
-        current_exercise = HammerCurl()
-    else:
-        return jsonify({'success': False, 'error': 'Invalid exercise type'})
-    
-    # Store exercise data
-    current_exercise_data = {
-        'type': exercise_type,
-        'sets': sets_goal,
-        'reps': exercise_goal
-    }
-    
-    # Start the exercise
-    exercise_running = True
-    
-    return jsonify({'success': True})
+    try:
+        # Initialize camera if not already done
+        try:
+            cam = initialize_camera()
+            if cam is None or not cam.isOpened():
+                logger.error("Camera failed to initialize")
+                return jsonify({'success': False, 'error': 'Camera initialization failed. Please check if camera is connected and not being used by another application.'}), 500
+        except Exception as cam_error:
+            logger.error(f"Camera initialization error: {cam_error}")
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': f'Camera error: {str(cam_error)}'}), 500
+        
+        # Reset counters
+        exercise_counter = 0
+        sets_completed = 0
+        workout_start_time = time.time()
+        
+        # Initialize the appropriate exercise class
+        try:
+            if exercise_type == "squat":
+                current_exercise = Squat()
+            elif exercise_type == "push_up":
+                current_exercise = PushUp()
+            elif exercise_type == "hammer_curl":
+                current_exercise = HammerCurl()
+            else:
+                return jsonify({'success': False, 'error': 'Invalid exercise type'}), 400
+        except Exception as ex_error:
+            logger.error(f"Exercise initialization error: {ex_error}")
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': f'Failed to initialize exercise: {str(ex_error)}'}), 500
+        
+        # Store exercise data
+        current_exercise_data = {
+            'type': exercise_type,
+            'sets': sets_goal,
+            'reps': exercise_goal
+        }
+        
+        # Start the exercise
+        exercise_running = True
+        
+        logger.info(f"Successfully started exercise: {exercise_type} - Sets: {sets_goal}, Reps: {exercise_goal}")
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error starting exercise: {e}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
 
 @app.route('/stop_exercise', methods=['POST'])
 def stop_exercise():

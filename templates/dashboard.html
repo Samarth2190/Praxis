@@ -3,22 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness Tracker Dashboard</title>
+    <title>GymAI - Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Fitness Tracker Dashboard</h1>
-            <p>Track your workout progress</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
+                <span style="color: var(--electric-blue); font-size: 2rem;">⚡</span>
+                <h1 style="margin: 0;">GymAI Dashboard</h1>
+            </div>
+            <p>Comprehensive Workout Analytics & Progress Tracking</p>
+            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px; font-size: 0.85rem;">
+                <span style="color: var(--success-green);">● SYSTEM OPERATIONAL</span>
+                <span style="color: var(--light-grey); opacity: 0.7;">ANALYTICS ACTIVE</span>
+            </div>
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/" class="nav-link">Home</a></li>
-                    <li><a href="/dashboard" class="nav-link active">Dashboard</a></li>
-                    <li><a href="/profile" class="nav-link">Profile</a></li>
+                    <li><a href="/" class="nav-link">HOME</a></li>
+                    <li><a href="/dashboard" class="nav-link active">DASHBOARD</a></li>
+                    <li><a href="/profile" class="nav-link">PROFILE</a></li>
                 </ul>
             </nav>
         </header>
@@ -89,9 +96,11 @@
             datasets: [{
                 label: 'Workout Minutes',
                 data: [30, 45, 0, 60, 20, 0, 45],
-                backgroundColor: 'rgba(52, 152, 219, 0.5)',
-                borderColor: 'rgba(52, 152, 219, 1)',
-                borderWidth: 1
+                backgroundColor: 'rgba(0, 212, 255, 0.5)',
+                borderColor: 'rgba(0, 212, 255, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
             }]
         };
         
@@ -100,16 +109,16 @@
             datasets: [{
                 data: [40, 35, 25],
                 backgroundColor: [
-                    'rgba(52, 152, 219, 0.7)',
-                    'rgba(46, 204, 113, 0.7)',
-                    'rgba(155, 89, 182, 0.7)'
+                    'rgba(0, 212, 255, 0.7)',
+                    'rgba(0, 255, 136, 0.7)',
+                    'rgba(255, 71, 87, 0.7)'
                 ],
                 borderColor: [
-                    'rgba(52, 152, 219, 1)',
-                    'rgba(46, 204, 113, 1)',
-                    'rgba(155, 89, 182, 1)'
+                    'rgba(0, 212, 255, 1)',
+                    'rgba(0, 255, 136, 1)',
+                    'rgba(255, 71, 87, 1)'
                 ],
-                borderWidth: 1
+                borderWidth: 2
             }]
         };
         
@@ -121,9 +130,32 @@
                     type: 'bar',
                     data: weeklyData,
                     options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
                         scales: {
                             y: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#b0b0b0'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 212, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#b0b0b0'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 212, 255, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffff'
+                                }
                             }
                         }
                     }
@@ -137,9 +169,18 @@
                     data: exerciseData,
                     options: {
                         responsive: true,
+                        maintainAspectRatio: true,
                         plugins: {
                             legend: {
                                 position: 'bottom',
+                                labels: {
+                                    color: '#ffffff',
+                                    padding: 15,
+                                    font: {
+                                        size: 12,
+                                        weight: '500'
+                                    }
+                                }
                             }
                         }
                     }
